@@ -23,7 +23,8 @@ npm run dev
 
 ## Setting up Backend
 
-1) Install PostgreSQL
+1) Install PostgreSQL and required dependancies
+    pip install -r requirements.txt
 2) Create env. file
     DATABASE_NAME=moviedb
     DATABASE_USER=csds341group
