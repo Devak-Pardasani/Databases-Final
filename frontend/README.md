@@ -20,3 +20,23 @@ If you are developing a production application, we recommend using TypeScript wi
 ## Running the Frontend
 
 npm run dev
+
+## Setting up Backend
+
+1) Install PostgreSQL
+2) Create env. file
+    DATABASE_NAME=moviedb
+    DATABASE_USER=csds341group
+    DATABASE_PASSWORD=password
+    DATABASE_HOST=localhost
+    DATABASE_PORT=5432
+3) Create Local Database and Load SQL Schema
+- psql -U postgres OR & "C:\Program Files\PostgreSQL\17\bin\psql.exe" -U postgres
+- CREATE USER csds341group WITH PASSWORD 'password';
+- CREATE DATABASE moviedb OWNER csds341group;
+- psql -U csds341group -d moviedb -f <path_to_MovieDB.sql>
+4) Run in terminal:
+- python manage.py makemigrations
+- python manage.py migrate
+5) Run Server
+- python manage.py runserver

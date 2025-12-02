@@ -1,0 +1,30 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Virtual environments
+venv/
+env/
+
+# Environment variables
+.env
+
+# Django stuff
+*.log
+staticfiles/
+media/
+
+# Database artifacts
+*.sqlite3
+
+# IDE and OS junk
+.vscode/
+.idea/
+.DS_Store
+
+# Node / React (if client folder)
+node_modules/
+dist/
+build/

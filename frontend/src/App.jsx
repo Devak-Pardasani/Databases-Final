@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 
 // Adjust this if your backend runs somewhere else
-const API_BASE = "http://localhost:8080/api";
+const API_BASE = "http://localhost:8000/api";
 
 function App() {
   const [movies, setMovies] = useState([]);
