@@ -24,13 +24,13 @@ npm run dev
 ## Setting up Backend
 
 1) Install PostgreSQL and required dependancies
-    pip install -r requirements.txt
+- pip install -r requirements.txt
 2) Create env. file
-    DATABASE_NAME=moviedb
-    DATABASE_USER=csds341group
-    DATABASE_PASSWORD=password
-    DATABASE_HOST=localhost
-    DATABASE_PORT=5432
+- DATABASE_NAME=moviedb
+- DATABASE_USER=csds341group
+- DATABASE_PASSWORD=password
+- DATABASE_HOST=localhost
+- DATABASE_PORT=5432
 3) Create Local Database and Load SQL Schema
 - psql -U postgres OR & "C:\Program Files\PostgreSQL\17\bin\psql.exe" -U postgres
 - CREATE USER csds341group WITH PASSWORD 'password';
