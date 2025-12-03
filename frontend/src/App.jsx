@@ -11,9 +11,9 @@ function App() {
   const [form, setForm] = useState({
     title: "",
     genre: "",
-    release_year: "",
+    actors: "",
     runtime_min: "",
-    production_country: "",
+    director: "",
     rating: "",
   });
 
@@ -57,21 +57,24 @@ function App() {
 
     // Sort
     result.sort((a, b) => {
-      const dir = sortDirection === "asc" ? 1 : -1;
+    const dir = sortDirection === "asc" ? 1 : -1;
 
-      let av = a[sortField];
-      let bv = b[sortField];
+    let av = a[sortField];
+    let bv = b[sortField];
 
-      // Handle numbers vs strings
-      if (sortField === "release_year" || sortField === "runtime_min" || sortField === "rating") {
-        av = Number(av);
-        bv = Number(bv);
-      }
+    if (sortField === "runtime_min" || sortField === "rating") {
+      av = Number(av);
+      bv = Number(bv);
+    } else if (sortField === "actors") {
+      av = Array.isArray(av) ? av.join(", ") : (av ?? "");
+      bv = Array.isArray(bv) ? bv.join(", ") : (bv ?? "");
+    }
 
-      if (av < bv) return -1 * dir;
-      if (av > bv) return 1 * dir;
-      return 0;
-    });
+    if (av < bv) return -1 * dir;
+    if (av > bv) return 1 * dir;
+    return 0;
+  });
+
 
     return result;
   };
@@ -95,9 +98,9 @@ function App() {
     setForm({
       title: "",
       genre: "",
-      release_year: "",
+      actors: "",
       runtime_min: "",
-      production_country: "",
+      director: "",
       rating: "",
     });
   };
@@ -106,18 +109,23 @@ function App() {
     e.preventDefault();
     setError("");
 
-    // Basic validation
-    if (!form.title || !form.release_year || !form.rating) {
-      setError("Title, Release Year, and Rating are required.");
+    if (!form.title || !form.rating) {
+      setError("Title and Rating are required.");
       return;
     }
 
+    // turn "Will Smith, Tom Hanks" into ["Will Smith", "Tom Hanks"]
+    const actorList = form.actors
+      .split(",")
+      .map((a) => a.trim())
+      .filter((a) => a.length > 0);
+
     const payload = {
       title: form.title,
-      genre: form.genre || null, // if you're also using MOVIE_GENRE, you can ignore this
-      release_year: Number(form.release_year),
+      genre: form.genre || null,
       runtime_min: form.runtime_min ? Number(form.runtime_min) : null,
-      production_country: form.production_country || null,
+      director: form.director || null,
+      actors: actorList,              // <-- now an array
       rating: Number(form.rating),
     };
 
@@ -135,8 +143,6 @@ function App() {
       }
 
       const saved = await res.json();
-
-      // Optimistically append to list
       setMovies((prev) => [...prev, saved]);
       resetForm();
     } catch (err) {
@@ -184,16 +190,13 @@ function App() {
             </div>
 
             <div className="form-row">
-              <label>
-                Release Year<span className="required">*</span>
-              </label>
+              <label>Actors</label>
               <input
-                type="number"
-                name="release_year"
-                value={form.release_year}
+                type="text"
+                name="actors"
+                value={form.actors}
                 onChange={handleFormChange}
-                placeholder="2010"
-                required
+                placeholder="Seperate with comma"
               />
             </div>
 
@@ -209,13 +212,13 @@ function App() {
             </div>
 
             <div className="form-row">
-              <label>Production Country</label>
+              <label>Director</label>
               <input
                 type="text"
-                name="production_country"
-                value={form.production_country}
+                name="director"
+                value={form.director}
                 onChange={handleFormChange}
-                placeholder="USA"
+                placeholder="Steven Spielberg"
               />
             </div>
 
@@ -279,8 +282,8 @@ function App() {
                     onSort={handleSort}
                   />
                   <SortableHeader
-                    label="Year"
-                    field="release_year"
+                    label="Actors"
+                    field="actors"   // <-- was "actor"
                     sortField={sortField}
                     sortDirection={sortDirection}
                     onSort={handleSort}
@@ -293,8 +296,8 @@ function App() {
                     onSort={handleSort}
                   />
                   <SortableHeader
-                    label="Country"
-                    field="production_country"
+                    label="Director"
+                    field="director"
                     sortField={sortField}
                     sortDirection={sortDirection}
                     onSort={handleSort}
@@ -310,12 +313,14 @@ function App() {
               </thead>
               <tbody>
                 {moviesToDisplay.map((m) => (
-                  <tr key={m.movie_id ?? `${m.title}-${m.release_year}`}>
+                  <tr key={m.movie_id ?? `${m.title}-${m.rating}`}>
                     <td>{m.title}</td>
                     <td>{m.genre}</td>
-                    <td>{m.release_year}</td>
+                    <td>
+                      {Array.isArray(m.actors) ? m.actors.join(", ") : m.actors}
+                    </td>
                     <td>{m.runtime_min}</td>
-                    <td>{m.production_country}</td>
+                    <td>{m.director}</td>
                     <td>{m.rating}</td>
                   </tr>
                 ))}
