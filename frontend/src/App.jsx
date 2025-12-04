@@ -9,7 +9,7 @@ function App() {
 
   const [form, setForm] = useState({
     title: "",
-    genre: "",
+    genres: "",
     actors: "",
     runtime_min: "",
     director: "",
@@ -20,6 +20,7 @@ function App() {
   const [sortField, setSortField] = useState("title");
   const [sortDirection, setSortDirection] = useState("asc");
 
+  // Fetch movies from backend (run once on mount)
   useEffect(() => {
     const fetchMovies = async () => {
       try {
@@ -37,29 +38,43 @@ function App() {
       }
     };
     fetchMovies();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // Filter + sort
   const filteredAndSortedMovies = () => {
     let result = [...movies];
+
+    // Search by title
     if (search.trim() !== "") {
       const query = search.toLowerCase();
-      result = result.filter((m) => m.title.toLowerCase().includes(query));
+      result = result.filter((m) =>
+        m.title.toLowerCase().includes(query)
+      );
     }
+
+    // Sort
     result.sort((a, b) => {
       const dir = sortDirection === "asc" ? 1 : -1;
+
       let av = a[sortField];
       let bv = b[sortField];
+
       if (sortField === "runtime_min" || sortField === "rating") {
         av = Number(av);
         bv = Number(bv);
-      } else if (sortField === "actors" || sortField === "genre") {
-        av = Array.isArray(av) ? av.join(", ") : av ?? "";
-        bv = Array.isArray(bv) ? bv.join(", ") : bv ?? "";
+      } else if (sortField === "genres" || sortField === "actors") {
+        const aList = Array.isArray(av) ? av : av ? [av] : [];
+        const bList = Array.isArray(bv) ? bv : bv ? [bv] : [];
+        av = aList.join(", ");
+        bv = bList.join(", ");
       }
+
       if (av < bv) return -1 * dir;
       if (av > bv) return 1 * dir;
       return 0;
     });
+
     return result;
   };
 
@@ -80,7 +95,7 @@ function App() {
   const resetForm = () => {
     setForm({
       title: "",
-      genre: "",
+      genres: "",
       actors: "",
       runtime_min: "",
       director: "",
@@ -91,26 +106,31 @@ function App() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
+
     if (!form.title || !form.rating) {
       setError("Title and Rating are required.");
       return;
     }
+
+    const genreList = form.genres
+      .split(",")
+      .map((g) => g.trim())
+      .filter((g) => g.length > 0);
+
     const actorList = form.actors
       .split(",")
       .map((a) => a.trim())
       .filter((a) => a.length > 0);
-    const genreList = form.genre
-      .split(",")
-      .map((g) => g.trim())
-      .filter((g) => g.length > 0);
+
     const payload = {
       title: form.title,
-      genre: genreList,
+      genres: genreList,
+      actors: actorList,
       runtime_min: form.runtime_min ? Number(form.runtime_min) : null,
       director: form.director || null,
-      actors: actorList,
       rating: Number(form.rating),
     };
+
     try {
       const res = await fetch(`${API_BASE}/movies`, {
         method: "POST",
@@ -124,6 +144,25 @@ function App() {
     } catch (err) {
       console.error(err);
       setError("Failed to add movie.");
+    }
+  };
+
+  const handleDelete = async (movieId) => {
+    if (!movieId) return;
+
+    try {
+      const res = await fetch(`${API_BASE}/movies/${movieId}`, {
+        method: "DELETE",
+      });
+
+      if (!res.ok) {
+        throw new Error(`HTTP ${res.status}`);
+      }
+
+      setMovies((prev) => prev.filter((m) => m.movie_id !== movieId));
+    } catch (err) {
+      console.error(err);
+      setError("Failed to delete movie.");
     }
   };
 
@@ -155,24 +194,24 @@ function App() {
             </div>
 
             <div className="form-row">
-              <label>Genre</label>
+              <label>Genres (comma-separated)</label>
               <input
                 type="text"
-                name="genre"
-                value={form.genre}
+                name="genres"
+                value={form.genres}
                 onChange={handleFormChange}
                 placeholder="Sci-Fi, Action"
               />
             </div>
 
             <div className="form-row">
-              <label>Actors</label>
+              <label>Actors (comma-separated)</label>
               <input
                 type="text"
                 name="actors"
                 value={form.actors}
                 onChange={handleFormChange}
-                placeholder="Seperate with comma"
+                placeholder="Will Smith, Tom Hanks"
               />
             </div>
 
@@ -251,8 +290,8 @@ function App() {
                     onSort={handleSort}
                   />
                   <SortableHeader
-                    label="Genre"
-                    field="genre"
+                    label="Genres"
+                    field="genres"
                     sortField={sortField}
                     sortDirection={sortDirection}
                     onSort={handleSort}
@@ -285,17 +324,35 @@ function App() {
                     sortDirection={sortDirection}
                     onSort={handleSort}
                   />
+                  <th>Actions</th>
                 </tr>
               </thead>
               <tbody>
                 {moviesToDisplay.map((m) => (
                   <tr key={m.movie_id ?? `${m.title}-${m.rating}`}>
                     <td>{m.title}</td>
-                    <td>{Array.isArray(m.genre) ? m.genre.join(", ") : m.genre}</td>
-                    <td>{Array.isArray(m.actors) ? m.actors.join(", ") : m.actors}</td>
+                    <td>
+                      {Array.isArray(m.genres)
+                        ? m.genres.join(", ")
+                        : m.genres ?? m.genre}
+                    </td>
+                    <td>
+                      {Array.isArray(m.actors)
+                        ? m.actors.join(", ")
+                        : m.actors}
+                    </td>
                     <td>{m.runtime_min}</td>
                     <td>{m.director}</td>
                     <td>{m.rating}</td>
+                    <td>
+                      <button
+                        className="btn"
+                        type="button"
+                        onClick={() => handleDelete(m.movie_id)}
+                      >
+                        Delete
+                      </button>
+                    </td>
                   </tr>
                 ))}
               </tbody>
@@ -310,8 +367,12 @@ function App() {
 function SortableHeader({ label, field, sortField, sortDirection, onSort }) {
   const isActive = sortField === field;
   const arrow = !isActive ? "⇅" : sortDirection === "asc" ? "↑" : "↓";
+
   return (
-    <th onClick={() => onSort(field)} style={{ cursor: "pointer", whiteSpace: "nowrap" }}>
+    <th
+      onClick={() => onSort(field)}
+      style={{ cursor: "pointer", whiteSpace: "nowrap" }}
+    >
       {label} <span style={{ fontSize: "0.8rem" }}>{arrow}</span>
     </th>
   );
