@@ -1,7 +1,16 @@
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from rest_framework import status
-from .models import Movies
+from django.db import transaction
+from .models import (
+    Movies, 
+    Genres, 
+    Actors, 
+    Directors, 
+    MovieToGenre, 
+    MovieToActor, 
+    MovieToDirector
+)
 from .serializers import MovieSerializer
 
 @api_view(["GET", "POST"])
@@ -13,11 +22,41 @@ def movies_list(request):
         serializer = MovieSerializer(movies, many=True)
         return Response(serializer.data)
 
-    # POST → create a new movie
+    # POST → create a new movie with related data
     if request.method == "POST":
-        serializer = MovieSerializer(data=request.data)
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        data = request.data
 
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        with transaction.atomic():  # ensure all-or-nothing
+
+            # Create the movie first
+            movie = Movies.objects.create(
+                title=data.get('title'),
+                runtime_min=data.get('runtime_min'),
+                rating=data.get('rating')
+            )
+
+            # Handle genre
+            genre_name = data.get('genre')
+            if genre_name:
+                genre, _ = Genres.objects.get_or_create(genre_name=genre_name)
+                mtg = MovieToGenre(movie=movie, genre=genre)
+                mtg.save(force_insert=True)  # avoid id issue
+
+            # Handle actors
+            actors_list = data.get('actors', [])
+            for actor_name in actors_list:
+                if actor_name:
+                    actor, _ = Actors.objects.get_or_create(actor_name=actor_name)
+                    mta = MovieToActor(movie=movie, actor=actor)
+                    mta.save(force_insert=True)  # avoid id issue
+
+            # Handle director
+            director_name = data.get('director')
+            if director_name:
+                director, _ = Directors.objects.get_or_create(director_name=director_name)
+                mtd = MovieToDirector(movie=movie, director=director)
+                mtd.save(force_insert=True)  # avoid id issue
+
+        # Return the created movie with all related data
+        serializer = MovieSerializer(movie)
+        return Response(serializer.data, status=status.HTTP_201_CREATED)

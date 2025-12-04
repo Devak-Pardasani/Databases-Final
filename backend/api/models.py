@@ -1,4 +1,5 @@
 from django.db import models
+from django.db.models import CompositePrimaryKey
 
 class Movies(models.Model):
     movie_id = models.AutoField(primary_key=True)
@@ -7,7 +8,7 @@ class Movies(models.Model):
     rating = models.IntegerField(null=True, blank=True)
 
     class Meta:
-        db_table = "movies"   # match exact SQL table name
+        db_table = "movies"
 
 
 class Genres(models.Model):
@@ -18,33 +19,12 @@ class Genres(models.Model):
         db_table = "genres"
 
 
-class MovieToGenre(models.Model):
-    movie = models.ForeignKey(Movies, on_delete=models.CASCADE, db_column="movie_id")
-    genre = models.ForeignKey(Genres, on_delete=models.CASCADE, db_column="genre_id")
-
-    class Meta:
-        db_table = "movietogenre"
-        unique_together = ("movie", "genre")
-        managed = False  # important — table already exists!
-
-
 class Actors(models.Model):
     actor_id = models.AutoField(primary_key=True)
     actor_name = models.CharField(max_length=255)
 
     class Meta:
         db_table = "actors"
-
-
-class MovieToActor(models.Model):
-    movie = models.ForeignKey(Movies, on_delete=models.CASCADE, db_column="movie_id")
-    actor = models.ForeignKey(Actors, on_delete=models.CASCADE, db_column="actor_id")
-    character_name = models.CharField(max_length=255, null=True, blank=True)
-
-    class Meta:
-        db_table = "movietoactor"
-        unique_together = ("movie", "actor")
-        managed = False
 
 
 class Directors(models.Model):
@@ -55,10 +35,37 @@ class Directors(models.Model):
         db_table = "directors"
 
 
+class MovieToGenre(models.Model):
+
+    movie = models.ForeignKey(Movies, on_delete=models.CASCADE, db_column="movie_id")
+    genre = models.ForeignKey(Genres, on_delete=models.CASCADE, db_column="genre_id")
+    pk = CompositePrimaryKey("movie_id", "genre_id")
+
+    class Meta:
+        db_table = "movietogenre"
+        unique_together = ("movie", "genre")
+        managed = False
+
+
+class MovieToActor(models.Model):
+
+    movie = models.ForeignKey(Movies, on_delete=models.CASCADE, db_column="movie_id")
+    actor = models.ForeignKey(Actors, on_delete=models.CASCADE, db_column="actor_id")
+    character_name = models.CharField(max_length=255, null=True, blank=True)
+    pk = CompositePrimaryKey("movie_id", "actor_id")
+
+    class Meta:
+        db_table = "movietoactor"
+        unique_together = ("movie", "actor")
+        managed = False
+
+
 class MovieToDirector(models.Model):
+
     movie = models.ForeignKey(Movies, on_delete=models.CASCADE, db_column="movie_id")
     director = models.ForeignKey(Directors, on_delete=models.CASCADE, db_column="director_id")
-
+    pk = CompositePrimaryKey("movie_id", "director_id")
+ 
     class Meta:
         db_table = "movietodirector"
         unique_together = ("movie", "director")
