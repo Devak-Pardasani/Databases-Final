@@ -12,10 +12,10 @@ class MovieSerializer(serializers.ModelSerializer):
 
     def get_genre(self, obj):
         """Get the genre name for this movie"""
-        mtg = MovieToGenre.objects.filter(movie=obj).first()
-        if mtg and mtg.genre:
-            return mtg.genre.genre_name
-        return None
+        mtg_qs = MovieToGenre.objects.filter(movie=obj)
+        
+        return [mtg.genre.genre_name for mtg in mtg_qs]
+        
 
     def get_actors(self, obj):
         """Get list of actor names for this movie"""

@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
 
-// Adjust this if your backend runs somewhere else
 const API_BASE = "http://localhost:8000/api";
 
 function App() {
@@ -19,18 +18,15 @@ function App() {
 
   const [search, setSearch] = useState("");
   const [sortField, setSortField] = useState("title");
-  const [sortDirection, setSortDirection] = useState("asc"); // "asc" | "desc"
+  const [sortDirection, setSortDirection] = useState("asc");
 
-  // Fetch movies from backend
   useEffect(() => {
     const fetchMovies = async () => {
       try {
         setLoading(true);
         setError("");
         const res = await fetch(`${API_BASE}/movies`);
-        if (!res.ok) {
-          throw new Error(`HTTP ${res.status}`);
-        }
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const data = await res.json();
         setMovies(data);
       } catch (err) {
@@ -43,45 +39,32 @@ function App() {
     fetchMovies();
   }, []);
 
-  // Helpers: sorting + filtering
   const filteredAndSortedMovies = () => {
     let result = [...movies];
-
-    // Filter by search (title substring, case-insensitive)
     if (search.trim() !== "") {
       const query = search.toLowerCase();
-      result = result.filter((m) =>
-        m.title.toLowerCase().includes(query)
-      );
+      result = result.filter((m) => m.title.toLowerCase().includes(query));
     }
-
-    // Sort
     result.sort((a, b) => {
-    const dir = sortDirection === "asc" ? 1 : -1;
-
-    let av = a[sortField];
-    let bv = b[sortField];
-
-    if (sortField === "runtime_min" || sortField === "rating") {
-      av = Number(av);
-      bv = Number(bv);
-    } else if (sortField === "actors") {
-      av = Array.isArray(av) ? av.join(", ") : (av ?? "");
-      bv = Array.isArray(bv) ? bv.join(", ") : (bv ?? "");
-    }
-
-    if (av < bv) return -1 * dir;
-    if (av > bv) return 1 * dir;
-    return 0;
-  });
-
-
+      const dir = sortDirection === "asc" ? 1 : -1;
+      let av = a[sortField];
+      let bv = b[sortField];
+      if (sortField === "runtime_min" || sortField === "rating") {
+        av = Number(av);
+        bv = Number(bv);
+      } else if (sortField === "actors" || sortField === "genre") {
+        av = Array.isArray(av) ? av.join(", ") : av ?? "";
+        bv = Array.isArray(bv) ? bv.join(", ") : bv ?? "";
+      }
+      if (av < bv) return -1 * dir;
+      if (av > bv) return 1 * dir;
+      return 0;
+    });
     return result;
   };
 
   const handleSort = (field) => {
     if (field === sortField) {
-      // toggle direction
       setSortDirection((prev) => (prev === "asc" ? "desc" : "asc"));
     } else {
       setSortField(field);
@@ -108,40 +91,33 @@ function App() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
-
     if (!form.title || !form.rating) {
       setError("Title and Rating are required.");
       return;
     }
-
-    // turn "Will Smith, Tom Hanks" into ["Will Smith", "Tom Hanks"]
     const actorList = form.actors
       .split(",")
       .map((a) => a.trim())
       .filter((a) => a.length > 0);
-
+    const genreList = form.genre
+      .split(",")
+      .map((g) => g.trim())
+      .filter((g) => g.length > 0);
     const payload = {
       title: form.title,
-      genre: form.genre || null,
+      genre: genreList,
       runtime_min: form.runtime_min ? Number(form.runtime_min) : null,
       director: form.director || null,
-      actors: actorList,              // <-- now an array
+      actors: actorList,
       rating: Number(form.rating),
     };
-
     try {
       const res = await fetch(`${API_BASE}/movies`, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
       });
-
-      if (!res.ok) {
-        throw new Error(`HTTP ${res.status}`);
-      }
-
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const saved = await res.json();
       setMovies((prev) => [...prev, saved]);
       resetForm();
@@ -185,7 +161,7 @@ function App() {
                 name="genre"
                 value={form.genre}
                 onChange={handleFormChange}
-                placeholder="Sci-Fi"
+                placeholder="Sci-Fi, Action"
               />
             </div>
 
@@ -283,7 +259,7 @@ function App() {
                   />
                   <SortableHeader
                     label="Actors"
-                    field="actors"   // <-- was "actor"
+                    field="actors"
                     sortField={sortField}
                     sortDirection={sortDirection}
                     onSort={handleSort}
@@ -315,10 +291,8 @@ function App() {
                 {moviesToDisplay.map((m) => (
                   <tr key={m.movie_id ?? `${m.title}-${m.rating}`}>
                     <td>{m.title}</td>
-                    <td>{m.genre}</td>
-                    <td>
-                      {Array.isArray(m.actors) ? m.actors.join(", ") : m.actors}
-                    </td>
+                    <td>{Array.isArray(m.genre) ? m.genre.join(", ") : m.genre}</td>
+                    <td>{Array.isArray(m.actors) ? m.actors.join(", ") : m.actors}</td>
                     <td>{m.runtime_min}</td>
                     <td>{m.director}</td>
                     <td>{m.rating}</td>
@@ -336,12 +310,8 @@ function App() {
 function SortableHeader({ label, field, sortField, sortDirection, onSort }) {
   const isActive = sortField === field;
   const arrow = !isActive ? "⇅" : sortDirection === "asc" ? "↑" : "↓";
-
   return (
-    <th
-      onClick={() => onSort(field)}
-      style={{ cursor: "pointer", whiteSpace: "nowrap" }}
-    >
+    <th onClick={() => onSort(field)} style={{ cursor: "pointer", whiteSpace: "nowrap" }}>
       {label} <span style={{ fontSize: "0.8rem" }}>{arrow}</span>
     </th>
   );

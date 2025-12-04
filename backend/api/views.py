@@ -36,11 +36,13 @@ def movies_list(request):
             )
 
             # Handle genre
-            genre_name = data.get('genre')
-            if genre_name:
-                genre, _ = Genres.objects.get_or_create(genre_name=genre_name)
-                mtg = MovieToGenre(movie=movie, genre=genre)
-                mtg.save(force_insert=True)  # avoid id issue
+            genre_list = data.get('genre',[])
+            for genre_name in genre_list:
+
+                if genre_name:
+                    genre, _ = Genres.objects.get_or_create(genre_name=genre_name)
+                    mtg = MovieToGenre(movie=movie, genre=genre)
+                    mtg.save(force_insert=True)  # avoid id issue
 
             # Handle actors
             actors_list = data.get('actors', [])
