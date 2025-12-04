@@ -111,12 +111,12 @@ function App() {
       setError("Title and Rating are required.");
       return;
     }
-
+    
     const genreList = form.genres
       .split(",")
       .map((g) => g.trim())
       .filter((g) => g.length > 0);
-
+    console.log(genreList);
     const actorList = form.actors
       .split(",")
       .map((a) => a.trim())
@@ -151,7 +151,7 @@ function App() {
     if (!movieId) return;
 
     try {
-      const res = await fetch(`${API_BASE}/movies/${movieId}`, {
+      const res = await fetch(`${API_BASE}/movies/${movieId}/`, {
         method: "DELETE",
       });
 
@@ -332,9 +332,7 @@ function App() {
                   <tr key={m.movie_id ?? `${m.title}-${m.rating}`}>
                     <td>{m.title}</td>
                     <td>
-                      {Array.isArray(m.genres)
-                        ? m.genres.join(", ")
-                        : m.genres ?? m.genre}
+                      {Array.isArray(m.genre) ? m.genre.join(", ") : m.genre}
                     </td>
                     <td>
                       {Array.isArray(m.actors)

@@ -62,3 +62,31 @@ def movies_list(request):
         # Return the created movie with all related data
         serializer = MovieSerializer(movie)
         return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+
+
+@api_view(["GET", "DELETE"])
+def movie_detail(request, movie_id):
+    if request.method == "GET":
+        try:
+            movie = Movies.objects.get(id=movie_id)
+        except Movies.DoesNotExist:
+            return Response({"error": "Movie not found"}, status=404)
+
+        serializer = MovieSerializer(movie)
+        return Response(serializer.data)
+
+    if request.method == "DELETE":
+        try:
+            movie = Movies.objects.get(movie_id=movie_id)
+        except Movies.DoesNotExist:
+            return Response({"error": "Movie not found"}, status=404)
+
+        with transaction.atomic():
+            MovieToGenre.objects.filter(movie=movie).delete()
+            MovieToActor.objects.filter(movie=movie).delete()
+            MovieToDirector.objects.filter(movie=movie).delete()
+
+            movie.delete()
+
+        return Response({"message": f"Movie {movie_id} deleted"}, status=200)
