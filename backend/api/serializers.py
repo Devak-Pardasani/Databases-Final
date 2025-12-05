@@ -12,8 +12,7 @@ class MovieSerializer(serializers.ModelSerializer):
 
     def get_genre(self, obj):
         """Get the genre name for this movie"""
-        mtg_qs = MovieToGenre.objects.filter(movie=obj)
-        
+        mtg_qs = MovieToGenre.objects.filter(movie=obj).select_related('genre')
         return [mtg.genre.genre_name for mtg in mtg_qs]
         
 

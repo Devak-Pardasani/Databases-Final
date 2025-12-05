@@ -36,7 +36,8 @@ def movies_list(request):
             )
 
             # Handle genre
-            genre_list = data.get('genre',[])
+            genre_list = data.get('genres',[])
+            print(f"genrelist: {genre_list}")
             for genre_name in genre_list:
 
                 if genre_name:
